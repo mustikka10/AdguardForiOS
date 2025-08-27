@@ -111,6 +111,9 @@ body:
       multiple: true
       options:
         - NoCoin Filter List
+        - Phishing URL Blocklist
+        - Scam Blocklist by DurableNapkin
+        - uBlock Origin - Badware risks
     validations:
       required: false
 
