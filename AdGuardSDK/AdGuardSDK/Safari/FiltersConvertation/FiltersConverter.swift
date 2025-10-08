@@ -200,8 +200,9 @@ final class FiltersConverter: FiltersConverterProtocol {
             Logger.logInfo("(FiltersConverter) - convertFilters; Start converting \(cbType)")
 
             let converter = ContentBlockerConverterWrapper()
+
             let result = converter.convertArray(
-                rules: rules,
+                rules: rules.uniqueElements,
                 advancedBlocking: configuration.advancedBlockingIsEnabled && configuration.proStatus
             )
 
