@@ -102,14 +102,15 @@ final class FiltersConverter: FiltersConverterProtocol {
      So we just pass json with empty rule to avoid this error
      */
     private lazy var emptyRuleJsonResult: ConversionResult = {
-        let converter = ContentBlockerConverterWrapper()
         return converter.convertArray(rules: [], advancedBlocking: false)
     }()
 
     private let configuration: SafariConfigurationProtocol
+    private let converter: ContentBlockerConverterProtocol
 
-    init(configuration: SafariConfigurationProtocol) {
+    init(configuration: SafariConfigurationProtocol, converter: ContentBlockerConverterProtocol = ContentBlockerConverterWrapper()) {
         self.configuration = configuration
+        self.converter = converter
     }
 
     // MARK: - Internal method
@@ -194,12 +195,11 @@ final class FiltersConverter: FiltersConverterProtocol {
     private func convert(filters: [ContentBlockerType: [String]]) -> [FiltersConverterResult] {
         Logger.logInfo("(FiltersConverter) - convertFilters; Safari rules conversion started")
 
-        let conversionResult: [FiltersConverterResult] = filters.concurrentMap { [unowned self] cbType, rules -> FiltersConverterResult in
+        let conversionResult: [FiltersConverterResult] = ContentBlockerType.allCases.map { [unowned self] cbType -> FiltersConverterResult in
+            let rules = filters[cbType] ?? []
 
             let start = Date()
             Logger.logInfo("(FiltersConverter) - convertFilters; Start converting \(cbType)")
-
-            let converter = ContentBlockerConverterWrapper()
 
             let result = converter.convertArray(
                 rules: rules.uniqueElements,

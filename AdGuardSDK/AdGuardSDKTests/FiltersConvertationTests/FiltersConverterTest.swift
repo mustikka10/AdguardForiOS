@@ -8,8 +8,6 @@ final class ContentBlockerConverterMock: ContentBlockerConverterProtocol {
     var convertArrayResult: ConversionResult!
     func convertArray(
         rules: [String],
-        safariVersion: SafariVersion,
-        optimize: Bool,
         advancedBlocking: Bool
     ) -> ConversionResult {
         convertArrayCalledCount += 1
@@ -17,8 +15,6 @@ final class ContentBlockerConverterMock: ContentBlockerConverterProtocol {
         return convertArrayResult
     }
 }
-
-// TODO: - These tests should be recovered because they are rather usefull
 
 class FiltersConverterTest: XCTestCase {
     var converterMock: ContentBlockerConverterMock!
@@ -175,5 +171,26 @@ class FiltersConverterTest: XCTestCase {
                 XCTAssertEqual(rules[0], "@@||*$document,domain=~ya.ru|~vk.com|~mail.ru")
             }
         }
+    }
+
+    func testDuplicateRulesAreDeduplicatedBeforeConversion() {
+        let filterWithDuplicates = FilterFileContent(text: """
+                                                            ally.sh#@#.adsBox
+                                                            google.com
+                                                            ally.sh#@#.adsBox
+                                                            google.com
+                                                            unique.rule.example.com
+                                                            """,
+                                                     group: .ads)
+
+        converterMock.convertArrayResult = ConversionResult(totalConvertedCount: 0, convertedCount: 0, errorsCount: 0, overLimit: false, converted: "", message: "")
+        converter.convert(filters: [filterWithDuplicates], blocklistRules: nil, allowlistRules: nil, invertedAllowlistRules: nil)
+
+        let generalRules = converterMock.passedRules.first { $0.contains("ally.sh#@#.adsBox") }
+        XCTAssertNotNil(generalRules)
+        XCTAssertEqual(generalRules?.count, 3)
+        XCTAssertEqual(generalRules?[0], "ally.sh#@#.adsBox")
+        XCTAssertEqual(generalRules?[1], "google.com")
+        XCTAssertEqual(generalRules?[2], "unique.rule.example.com")
     }
 }
